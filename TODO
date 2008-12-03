@@ -1,0 +1,15 @@
+sort
+  photo date (default)
+  publish date
+
+browse by and autolink
+  date
+  country
+  person
+  photographer
+  
+captions on/off
+
+admin
+  login
+  delete photos/attributes

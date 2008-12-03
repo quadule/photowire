@@ -1,0 +1,14 @@
+!!!
+%head
+  %title Photowire
+  =css_include_tag 'master'
+  =js_include_tag 'jquery'
+  =js_include_tag 'application'
+
+%body
+  %h1 Photowire
+  %p
+    ="Indexing #{Photo.all.count} photos and #{PhotoExifAttribute.all.count} EXIF attributes."
+    ="Last updated #{time_ago_in_words(Photo.first(:order => [:id.desc]).downloaded_at)} ago."
+
+  =catch_content :for_layout

@@ -1,0 +1,8 @@
+%ul.photos
+  -@photos.each do |photo|
+    %li[photo]
+      %a{:href => url(:photo, photo)}
+        =image_tag public_path(photo.thumbnail), :alt => h(photo.description_trimmed)
+        .title=h photo.description_trimmed
+
+=paginate @page, @pages, :left_cut_label => '&hellip;', :right_cut_label => '&hellip;', :default_css => false
