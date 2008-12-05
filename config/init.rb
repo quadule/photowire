@@ -133,7 +133,7 @@ Merb::Config.use do |c|
   # c[:session_id_key] = '_session_id'
   
   # The session_secret_key is only required for the cookie session store.
-  c[:session_secret_key] = File.read(__FILE__ / 'secret').strip
+  c[:session_secret_key] = File.read(File.dirname(__FILE__) / 'secret').strip
   
   # There are various options here, by default Merb comes with 'cookie', 
   # 'memory' or 'memcached'.  You can of course use your favorite ORM 
