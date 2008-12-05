@@ -5,13 +5,27 @@ class Photos < Application
   end
   
   def search
-    model = Photo.downloaded
+    model = Photo.downloaded.all(order)
     if params[:date]
       date = Date.parse(params[:date])
-      model = model.all order.merge(
+      model = model.all(
         :published_at.gte => date,
         :published_at.lte => date+1
       )
+    end
+    
+    if params[:for]
+      model = model.all :description.like => "%#{params[:for]}%"
+    end
+    
+    if params[:attribute].is_a?(Hash)
+      params[:attribute].each do |id, value|
+        model = model.all(
+          :links => [:exif_attributes],
+          Photo.exif_attributes.exif_attribute_id => id,
+          Photo.exif_attributes.value => value
+        )
+      end
     end
     
     paginate_model model
@@ -25,6 +39,7 @@ class Photos < Application
   
   private
     def order
+      #TODO: override with something from params
       {:order => [:published_at.desc]}
     end
   

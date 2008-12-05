@@ -1,3 +1,9 @@
+%form{:action => url(:search_photos)}
+  %label
+    Search:
+    %input{:type => :text, :name => 'for', :value => h(params[:for] || '')}
+    %input{:type => :submit, :value => 'Go'}
+
 %ul.photos
   -@photos.each do |photo|
     %li[photo]
@@ -5,4 +11,4 @@
         =image_tag public_path(photo.thumbnail), :alt => h(photo.description_trimmed)
         .title=h photo.description_trimmed
 
-=paginate @page, @pages, :left_cut_label => '&hellip;', :right_cut_label => '&hellip;', :default_css => false
+=paginate @page, @pages, :left_cut_label => '&hellip;', :right_cut_label => '&hellip;', :default_css => false, :url => "?#{search_query}"

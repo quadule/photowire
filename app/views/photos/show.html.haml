@@ -8,4 +8,6 @@
 %dl
   -@photo.exif_attributes.each do |attr|
     %dt=h attr.exif_attribute.name
-    %dd=h attr.value
+    %dd
+      %a{:href => url(:search_photos, "attribute[#{attr.exif_attribute.id}]" => h(attr.value))}
+        =h attr.value

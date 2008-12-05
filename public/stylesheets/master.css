@@ -26,6 +26,7 @@ ul.photos {
       margin: 0 170px 3px 0;
       float: left; }
     ul.photos li.photo .title {
+      clear: both;
       padding-bottom: 10px; }
 
 .paginated {
