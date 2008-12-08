@@ -18,27 +18,20 @@ class Wire
   end
   
   def feed
-    refresh if (Time.now.utc - refreshed_at) > 3600 #1 hour
+    refresh if refreshed_at.nil? || (Time.now.utc - refreshed_at) > 3600 #1 hour
     @feed ||= Hpricot.XML(feed_cache)
   end
   
   def crawl
     (feed/'//item').reverse.each do |item|
-      photo = Photo.new(:url => (item/'enclosure')[0][:url], :wire => self)
+      enclosure = (item/'enclosure')[0]
+      photo = Photo.new(:url => enclosure[:url], :wire => self)
+      photo.expected_size = enclosure[:length].to_i
+      
       unless photo.duplicate?
-        begin
-          photo.published_at = Time.parse((item/'pubDate').inner_text)
-          photo.save!
-          if photo.download
-            puts "thumbnailing"
-            photo.thumbnail
-          else
-            puts "error downloading!"
-          end
-        rescue Exception => ex
-          debugger
-          x=1
-        end
+        photo.published_at = Time.parse((item/'pubDate').inner_text)
+        photo.save!
+        photo.thumbnail if photo.download
       end
     end
   end
