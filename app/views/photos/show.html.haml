@@ -1,13 +1,14 @@
-%h2 Caption
-%p= add_links @photo.description
+.show[@photo]
+  %h2 Caption
+  %p= add_links @photo.description || ''
 
-%h2 Full-size Photo
-=image_tag public_path(@photo.path)
+  %h2 Full-size Photo
+  =image_tag public_path(@photo.path), :alt => h(@photo.description_trimmed), :width => @photo.width, :height => @photo.height
 
-%h2 EXIF Attributes
-%dl
-  -@photo.exif_attributes.each do |attr|
-    %dt=h attr.exif_attribute.name
-    %dd
-      %a{:href => url(:search_photos, "attribute[#{attr.exif_attribute.id}]" => h(attr.value))}
-        =h attr.value
+  %h2 EXIF Attributes
+  %dl
+    -@photo.exif_attributes.each do |attr|
+      %dt=h attr.exif_attribute.name
+      %dd
+        %a{:href => url(:photos, "attribute[#{attr.exif_attribute.id}]" => h(attr.value))}
+          =h attr.value

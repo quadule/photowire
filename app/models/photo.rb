@@ -31,24 +31,16 @@ class Photo
     downloaded.first :order => [:id.desc]
   end
   
-  IGNORE_ATTRIBUTES = %w{
-    APP14Flags0 APP14Flags1 ApplicationRecordVersion BitsPerSample CMMFlags
-    ColorSpaceData ComponentsConfiguration ComponentsConfiguration Compression
-    DateCreated DCTEncodeVersion DeviceAttributes Directory EncodingProcess
-    ExifByteOrder ExifImageHeight ExifImageWidth ExifToolVersion ExifVersion
-    FNumber FileModifyDate FileName FileSize FileType FlashpixVersion
-    FocalLength35efl FocalLengthIn35mmFormat GPSVersionID ImageDescription
-    ImageHeight ImageSize ImageWidth InteropIndex InteropVersion JFIFVersion
-    MediaBlackPoint MIMEType ProfileClass ProfileCopyright ProfileCreator
-    ProfileDateTime SubSecDateTimeOriginal SubSecTimeDigitized
-    SubSecTimeOriginal ThumbnailLength ThumbnailOffset TimeCreated
-  }
-  IGNORE_VALUES = %w{Normal (none) none None Unknown Uncalibrated}
-  
   after :path=, :set_file_size
   
   def set_file_size
     self.size = File.size(path) unless path.nil?
+  end
+  
+  def thumbnail_size
+    bigger_dimension = height > width ? height : width
+    scale = 150.0/bigger_dimension
+    [width, height].map { |dim| (dim * scale).round }
   end
   
   def thumbnail
@@ -57,9 +49,7 @@ class Photo
     
     Merb.logger.info "Generating thumbnail for Photo[#{id}]"
     img = Magick::Image.read(path).first
-    bigger_dimension = img.rows > img.columns ? img.rows : img.columns
-    scale = 150.0/bigger_dimension
-    img.thumbnail!(scale)
+    img.thumbnail!(*thumbnail_size)
     
     img.write(thumb_path) {
       self.format = 'JPG'
@@ -72,9 +62,10 @@ class Photo
   
   def description_trimmed
     (description || '').
-      gsub(/^\*\*.*\*\*\W*/, '').
+      gsub(/^\*\*.*\*\* */, '').
+      gsub(/^\(FILES\) */, '').
       gsub(/ ?\(AP Photo\/?.*\)\.?$/, '').
-      gsub(/\W*AFP PHOTO.*$/, '')
+      gsub(/ *AFP[ -]+Photo.*$/i, '')
   end
   
   def duplicate?
@@ -117,7 +108,7 @@ class Photo
         self.path = tmp.path
         
         begin
-          parse_exif
+          save_exif
         rescue
           Merb.logger.warn "EXIF parsing failed for Photo[#{id}]: #{$!}"
         end
@@ -143,20 +134,23 @@ class Photo
     hash
   end
   
-  def parse_exif
-    @exif = MiniExiftool.new(path).to_hash
-    Merb.logger.info "Parsed #{@exif.size} EXIF attributes for Photo[#{id}]"
-    description = @exif.delete("Caption-Abstract")
+  def exif
+    @exif ||= MiniExiftool.new(path).to_hash
+  end
+  
+  def save_exif
+    Merb.logger.info "Parsed #{exif.size} EXIF attributes for Photo[#{id}]"
+    description = exif.delete("Caption-Abstract")
     self.description = description.join(' ') if description.is_a?(Array)
-    self.published_at = @exif['DateTimeOriginal']
+    self.published_at = exif['DateTimeOriginal']
     self.published_at = self.published_at.gsub(/^(\d{4}):(\d{2}):(\d{2}) /, '\1/\2/\3 ') if published_at.is_a?(String)
-    self.downloaded_at ||= @exif['FileModifyDate']
-    self.width = @exif['ImageWidth'].to_i
-    self.height = @exif['ImageHeight'].to_i
+    self.downloaded_at ||= exif['FileModifyDate']
+    self.width = exif['ImageWidth'].to_i
+    self.height = exif['ImageHeight'].to_i
     
     self.exif_attributes.each { |a| a.destroy }
-    @exif.each do |key, value|
-      next if value.blank? || IGNORE_ATTRIBUTES.include?(key) || IGNORE_VALUES.include?(value)
+    exif.each do |key, value|
+      next if value.blank? || PhotoExifAttribute.ignore?(key, value)
       
       if value.is_a?(Array)
         next if value[0].include?('(Binary data')
@@ -169,7 +163,17 @@ class Photo
       )
     end
     Merb.logger.info "Saved #{exif_attributes.size} EXIF attributes for Photo[#{id}]"
-    @exif
+  end
+  
+  def keep?
+    log_text = "Skipping Photo[#{id}]: "
+    
+    if exif['LanguageIdentifier'] && !exif['LanguageIdentifier'].match(/^(en|gb)/i)
+      Merb.logger.info log_text + "description not in english"
+      return false
+    end
+    
+    true
   end
   
   private

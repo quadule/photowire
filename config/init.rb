@@ -74,7 +74,8 @@ dependency "rmagick"
 Merb::BootLoader.after_app_loads do
   # Add dependencies here that must load after the application loads:
 
-  # dependency "magic_admin" # this gem uses the app's model classes  
+  # dependency "magic_admin" # this gem uses the app's model classes
+  DataObjects::Mysql.logger = DataObjects::Logger.new('log/dm.log', Merb.logger.level)
 end
 
 

@@ -21,7 +21,34 @@
     }
   }
   
+  function zoomablePhoto() {
+    var photo = $(this), container = photo.parent();
+    var width = photo.width(), height = photo.height();
+    var scale = container.innerWidth() / width;
+    
+    //don't zoom photos smaller than the viewport
+    if(scale >= 1) return false;
+    
+    if(!$.browser.mozilla) photo.css('cursor', 'move');
+    
+    photo.click(function() {
+      if(photo.data('zoomed')) {
+        photo.width(width);
+        photo.height(height);
+        if($.browser.mozilla) photo.css('cursor', '-moz-zoom-out');
+        photo.data('zoomed', false);
+      } else {
+        photo.width(Math.round(width * scale));
+        photo.height(Math.round(height * scale));
+        if($.browser.mozilla) photo.css('cursor', '-moz-zoom-in');
+        photo.data('zoomed', true);
+      }
+    });
+    photo.click();
+  }
+  
   $(function() {
-    setTimeout(function() { $('.photo').each(scrollablePhoto); }, 50);
+    $('.photos.index .photo').each(scrollablePhoto);
+    $('.photo.show img').each(zoomablePhoto);
   });
 })(jQuery);

@@ -1,11 +1,14 @@
 class Photos < Application
   def index
-    paginate_model Photo.downloaded.all(order)
-    render
-  end
-  
-  def search
-    model = Photo.downloaded.all(order)
+    model = Photo.downloaded
+    
+    model = model.all(:wire_id => 1) if params[:wire] == 'ap'
+    model = model.all(:wire_id => 2) if params[:wire] == 'afp'
+    
+    if params[:filename]
+      model = model.all(:path.like => "%#{params[:filename]}%")
+    end
+    
     if params[:date]
       date = Date.parse(params[:date])
       model = model.all(
@@ -14,11 +17,12 @@ class Photos < Application
       )
     end
     
-    if params[:for]
-      model = model.all :description.like => "%#{params[:for]}%"
+    if params[:search]
+      model = model.all :description.like => "%#{params[:search]}%"
     end
     
     if params[:attribute].is_a?(Hash)
+      #FIXME: this doesn't actually work for multiple attribute key/value pairs
       params[:attribute].each do |id, value|
         model = model.all(
           :links => [:exif_attributes],
@@ -50,9 +54,9 @@ class Photos < Application
       @per_page = (params[:per_page] || 18).to_i
       @per_page = 1 if @per_page <= 0
 
-      @pages, @photos = model.paginated(
+      @pages, @photos = model.paginated({
         :page =>     @page,
         :per_page => @per_page
-      )
+      }.merge(order))
     end
 end

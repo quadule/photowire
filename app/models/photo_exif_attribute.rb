@@ -7,4 +7,29 @@ class PhotoExifAttribute
   belongs_to :photo
   
   validates_is_unique :exif_attribute_id, :scope => :photo_id
+  
+  IGNORE_KEYS = %w{
+    APP14Flags0 APP14Flags1 ApplicationRecordVersion BitsPerSample CMMFlags
+    ColorMode ColorSpaceData ComponentsConfiguration ComponentsConfiguration
+    Compression DateCreated DCTEncodeVersion DeviceAttributes Directory
+    EncodingProcess EnvelopeRecordVersion ExifByteOrder ExifImageHeight
+    ExifImageWidth ExifToolVersion ExifVersion FileFormat FileModifyDate
+    FileName FileSize FileType FileVersion FlashpixVersion FNumber
+    FocalLength35efl FocalLengthIn35mmFormat Format GPSVersionID
+    ImageDescription ImageHeight ImageSize ImageWidth InteropIndex
+    InteropVersion JFIFVersion MediaBlackPoint MIMEType ProductID ProfileClass
+    ProfileConnectionSpace ProfileCopyright ProfileCreator ProfileDateTime
+    ProfileFileSignature ProfileID Rotation ServiceIdentifier
+    SubSecDateTimeOriginal SubSecTimeDigitized SubSecTimeOriginal
+    ThumbnailLength ThumbnailOffset TimeCreated
+  }
+  IGNORE_VALUES = %w{Normal (none) none None Unknown Uncalibrated}
+  
+  def self.ignore?(key, value)
+    IGNORE_KEYS.include?(key) || IGNORE_VALUES.include?(value)
+  end
+  
+  def self.cleanup
+    all('exif_attribute.name' => IGNORE_KEYS).each { |a| a.destroy }
+  end
 end

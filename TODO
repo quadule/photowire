@@ -9,11 +9,25 @@ browse by and autolink
   country
   person
   photographer
-  
-captions on/off
+
+data
+  fix question marks in afp captions
+  criteria for interesting afp photos
+
+ui
+  attach scroll behavior on mouseover
+  captions on/off
 
 rss/atom feed
+
+attribute value histograms
 
 admin
   login
   delete photos/attributes
+
+other photo sources
+  washingtontimes.com (~6250 hi-res photos on google)
+    http://images.google.com/images?q=site:media.washingtontimes.com&um=1&hl=en&safe=off&imgsz=huge
+  daylife.com
+    urls are hackable to get any image size
