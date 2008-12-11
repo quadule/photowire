@@ -5,7 +5,7 @@ class Photo
   property :published_at, Time
   property :downloaded_at, Time
   property :url, String, :length => 255
-  property :path, String, :length => 255
+  property :path, String, :length => 255, :unique => true
   property :size, Integer
   property :description, DataMapper::Types::Text
   property :width, Integer
@@ -14,10 +14,14 @@ class Photo
   belongs_to :wire, :class_name => 'Wire'
   has n, :exif_attributes, :class_name => 'PhotoExifAttribute'
   
-  validates_is_unique :url, :path
+  validates_is_unique :url, :allow_nil => true
   
   attr_reader :exif
   attr_accessor :expected_size
+  
+  after :path=, :set_file_size
+  before :destroy, :destroy_exif_attributes
+  before :destroy, :delete_files
   
   def self.downloaded
     all :downloaded_at.not => nil
@@ -31,10 +35,12 @@ class Photo
     downloaded.first :order => [:id.desc]
   end
   
-  after :path=, :set_file_size
-  
   def set_file_size
     self.size = File.size(path) unless path.nil?
+  end
+  
+  def destroy_exif_attributes
+    exif_attributes.each { |a| a.destroy }
   end
   
   def thumbnail_size
@@ -70,10 +76,17 @@ class Photo
   
   def duplicate?
     !!self.class.first(:path.like => "%-#{file_identifier}.jpg")
+    #expected_size ? !!dupe && dupe.size == expected_size : !!dupe
   end
   
   def file_identifier
     url[/\/([^\/]+)\.jpg$/i, 1].sub(/^af?p/i, '')
+  end
+  
+  # in the AFP wire, the filename prefix appears to specify a global region of interest
+  def afp_grouping
+    return nil unless wire_id == 2
+    file_identifier.sub(/\d+/, '')
   end
   
   def alternate_url
@@ -128,6 +141,11 @@ class Photo
     !downloaded_at.nil?
   end
   
+  def delete_files
+    File.delete(thumbnail)
+    File.delete(path)
+  end
+  
   def attributes_hash
     hash = {}
     exif_attributes.each { |a| hash[a.exif_attribute.name] = a.value }
@@ -148,7 +166,7 @@ class Photo
     self.width = exif['ImageWidth'].to_i
     self.height = exif['ImageHeight'].to_i
     
-    self.exif_attributes.each { |a| a.destroy }
+    destroy_exif_attributes
     exif.each do |key, value|
       next if value.blank? || PhotoExifAttribute.ignore?(key, value)
       
@@ -168,8 +186,8 @@ class Photo
   def keep?
     log_text = "Skipping Photo[#{id}]: "
     
-    if exif['LanguageIdentifier'] && !exif['LanguageIdentifier'].match(/^(en|gb)/i)
-      Merb.logger.info log_text + "description not in english"
+    if exif['LanguageIdentifier'] && exif['LanguageIdentifier'].match(/^fr/i)
+      Merb.logger.info log_text + "description in French"
       return false
     end
     

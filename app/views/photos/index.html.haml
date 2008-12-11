@@ -8,6 +8,8 @@
   -@photos.each do |photo|
     %li[photo]
       %a{:href => url(:photo, photo)}
+        -if @admin && photo.afp_grouping
+          %strong= photo.afp_grouping
         -width, height = photo.thumbnail_size
         =image_tag public_path(photo.thumbnail), :alt => h(photo.description_trimmed), :width => width, :height => height
         .title=h photo.description_trimmed

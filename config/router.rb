@@ -32,6 +32,8 @@ Merb::Router.prepare do |r|
   # clients from calling your create or destroy actions with a GET
   # r.default_routes
   
+  r.match('/admin').to(:controller => 'root', :action =>'admin')
+  
   # Change this for your home page to be available at /
-  # r.match('/').to(:controller => 'whatever', :action =>'index')
+  r.match('/').to(:controller => 'root', :action =>'index')
 end

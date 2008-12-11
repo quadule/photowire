@@ -1,6 +1,14 @@
 .show[@photo]
+  -if @admin
+    =form_for :photo, :action => url(:photo, @photo), :method => 'delete' do
+      =submit 'Delete'
+
   %h2 Caption
   %p= add_links @photo.description || ''
+  -if @admin
+    =form_for :photo, :action => url(:photo, @photo) do
+      =text_area :description, :cols => 80, :rows => 5
+      =submit 'Save'
 
   %h2 Full-size Photo
   =image_tag public_path(@photo.path), :alt => h(@photo.description_trimmed), :width => @photo.width, :height => @photo.height

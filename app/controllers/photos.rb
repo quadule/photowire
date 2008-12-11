@@ -1,4 +1,6 @@
 class Photos < Application
+  before :require_admin, :only => [:destroy, :update]
+  
   def index
     model = Photo.downloaded
     
@@ -37,8 +39,19 @@ class Photos < Application
   end
   
   def show
-    @photo = Photo.get(params[:id])
+    @photo = Photo.get!(params[:id])
     render
+  end
+  
+  def destroy
+    Photo.get!(params[:id]).destroy
+    redirect url(:photos)
+  end
+  
+  def update
+    @photo = Photo.get!(params[:id])
+    @photo.update_attributes(params[:photo])
+    redirect url(:photo, @photo)
   end
   
   private

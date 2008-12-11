@@ -1,4 +1,4 @@
 .DS_Store
 config/database.yml
-config/secret
+config/secrets.rb
 public/images/*

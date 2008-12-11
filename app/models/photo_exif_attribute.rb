@@ -6,8 +6,6 @@ class PhotoExifAttribute
   belongs_to :exif_attribute
   belongs_to :photo
   
-  validates_is_unique :exif_attribute_id, :scope => :photo_id
-  
   IGNORE_KEYS = %w{
     APP14Flags0 APP14Flags1 ApplicationRecordVersion BitsPerSample CMMFlags
     ColorMode ColorSpaceData ComponentsConfiguration ComponentsConfiguration
