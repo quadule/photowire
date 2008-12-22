@@ -62,6 +62,7 @@ class Photo
       self.quality = 90
     }
     img.destroy!
+    File.chmod(0644, thumb_path)
     
     thumb_path
   end
@@ -130,6 +131,7 @@ class Photo
         FileUtils.mkpath(dir) unless File.directory?(dir)
         destination = dir / "#{published_at.strftime('%Y%m%d')}-#{file_identifier}.jpg"
         File.rename(tmp.path, destination)
+        File.chmod(0644, destination)
         self.path = destination.sub(Merb.root + '/', '')
         self.downloaded_at = Time.now
       end
@@ -188,6 +190,11 @@ class Photo
     
     if exif['LanguageIdentifier'] && exif['LanguageIdentifier'].match(/^fr/i)
       Merb.logger.info log_text + "description in French"
+      return false
+    end
+    
+    if exif['OriginalTransmissionReference'] == 'ADVISORY'
+      Merb.logger.info log_text + "AFP advisory"
       return false
     end
     
