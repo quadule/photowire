@@ -10,9 +10,6 @@ browse by and autolink
   person
   photographer
 
-filtering
-  no french captions: Photo.all(:links => [:exif_attributes], Photo.exif_attributes.exif_attribute_id => 677, Photo.exif_attributes.value => 'fr').each { |p| p.destroy }
-
 data
   fix question marks in afp captions
   criteria for interesting afp photos
@@ -29,7 +26,7 @@ admin
   delete attributes
 
 other photo sources
-  washingtontimes.com (~6250 hi-res photos on google)
+  washingtontimes.com (tons of hi-res photos on google):
     http://images.google.com/images?q=site:media.washingtontimes.com&um=1&hl=en&safe=off&imgsz=huge
   daylife.com
     urls are hackable to get any image size

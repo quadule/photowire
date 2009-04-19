@@ -8,8 +8,11 @@
 %body
   %h1 Photowire
   %p
-    ="Logged in as admin." if @admin
-    ="Indexing #{Photo.downloaded.count} photos and #{PhotoExifAttribute.all.count} EXIF attributes."
+    -if @admin
+      %p="Indexing #{Statistic.photo_count} photos and #{Statistic.attribute_count} EXIF attributes."
+    -else
+      ="A database of #{Statistic.photo_count} high-resolution photographs from the Associated Press and Agence France-Presse news wires."
     ="Last updated #{time_ago_in_words(Photo.newest.downloaded_at)} ago."
-
+    %a{:href => '/about'} More about...
+    
   =catch_content :for_layout

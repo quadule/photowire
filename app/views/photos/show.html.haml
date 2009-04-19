@@ -1,5 +1,8 @@
 .show[@photo]
   -if @admin
+    =form_for :photo, :action => url(:photo, @photo), :method => 'put' do
+      =text_field :published_at, :label => 'Reset publish date: ', :value => (find_date(@photo.description) || @photo.published_at)
+      =submit 'Save'
     =form_for :photo, :action => url(:photo, @photo), :method => 'delete' do
       =submit 'Delete'
 

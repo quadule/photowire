@@ -3,6 +3,10 @@ class Root < Application
     redirect url(:photos)
   end
   
+  def about
+    render
+  end
+  
   def admin
     if @admin && !params[:off]
       redirect url(:photos)

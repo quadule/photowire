@@ -4,10 +4,14 @@ module Merb
     MONTH = /jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep|sept(ember)?|oct(ober)?|nov(ember)?|dec(ember)?/i
     DATE = Regexp.new "(#{DAY.source}\\.?)?\\s*(#{MONTH.source})\\.?\\s*(\\d{1,2})\\s*(\\d{4})", 'i'
     
+    def find_date(str)
+      Date.parse str[DATE, 0]
+    end
+    
     def link_dates(str)
       str.gsub(DATE) do |match|
         date = Date.parse(match).strftime('%Y-%m-%d')
-        tag :a, match, :href => url(:photos, :date => date)
+        replacement = tag :a, match, :href => url(:photos, :date => date)
       end
     end
     

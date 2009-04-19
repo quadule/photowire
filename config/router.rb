@@ -33,6 +33,7 @@ Merb::Router.prepare do |r|
   # r.default_routes
   
   r.match('/admin').to(:controller => 'root', :action =>'admin')
+  r.match('/about').to(:controller => 'root', :action =>'about')
   
   # Change this for your home page to be available at /
   r.match('/').to(:controller => 'root', :action =>'index')

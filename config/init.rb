@@ -60,6 +60,7 @@ Gem.path.unshift(Merb.root / "gems")
 dependency "dm-validations"
 dependency "dm-aggregates"
 dependency "dm-is-paginated"
+dependency "dm-timestamps"
 
 dependency "merb-action-args"   # Provides support for querystring arguments to be passed in to controller actions
 dependency "merb-assets"        # Provides link_to, asset_path, auto_link, image_tag methods (and lots more)
@@ -77,7 +78,7 @@ Merb::BootLoader.after_app_loads do
   # Add dependencies here that must load after the application loads:
 
   # dependency "magic_admin" # this gem uses the app's model classes
-  DataObjects::Mysql.logger = DataObjects::Logger.new('log/dm.log', Merb.logger.level)
+  # DataObjects::Mysql.logger = DataObjects::Logger.new('log/dm.log', Merb.logger.level)
 end
 
 

@@ -12,7 +12,7 @@ class Wire
   
   def refresh
     self.feed_cache = open(url).read
-    self.refreshed_at = Time.now
+    self.refreshed_at = Time.now.utc
     @feed = nil
     save!
   end
@@ -27,11 +27,17 @@ class Wire
       enclosure = (item/'enclosure')[0]
       photo = Photo.new(:url => enclosure[:url], :wire => self)
       photo.expected_size = enclosure[:length].to_i
+      photo.published_at = Time.parse((item/'pubDate').inner_text)
       
-      unless photo.duplicate?
-        photo.published_at = Time.parse((item/'pubDate').inner_text)
+      unless photo.duplicate? or IgnoredUrl.ignore?(enclosure[:url])
         photo.save!
-        photo.thumbnail if photo.download
+        if photo.download
+          if photo.keep?
+            photo.thumbnail
+          else
+            photo.destroy
+          end
+        end
       end
     end
   end

@@ -2,17 +2,20 @@ class Photos < Application
   before :require_admin, :only => [:destroy, :update]
   
   def index
+    @description = []
     model = Photo.downloaded
     
     model = model.all(:wire_id => 1) if params[:wire] == 'ap'
     model = model.all(:wire_id => 2) if params[:wire] == 'afp'
     
     if params[:filename]
+      @description << "with a filename containing \"#{params[:filename]}\""
       model = model.all(:path.like => "%#{params[:filename]}%")
     end
     
     if params[:date]
       date = Date.parse(params[:date])
+      @description << "taken on #{params[:date]}"
       model = model.all(
         :published_at.gte => date,
         :published_at.lte => date+1
@@ -20,12 +23,14 @@ class Photos < Application
     end
     
     if params[:search]
+      @description << "with a caption containing \"#{params[:search]}\""
       model = model.all :description.like => "%#{params[:search]}%"
     end
     
     if params[:attribute].is_a?(Hash)
       #FIXME: this doesn't actually work for multiple attribute key/value pairs
       params[:attribute].each do |id, value|
+        @description << "where #{ExifAttribute.get!(id).name} = \"#{value}\""
         model = model.all(
           :links => [:exif_attributes],
           Photo.exif_attributes.exif_attribute_id => id,
@@ -34,6 +39,7 @@ class Photos < Application
       end
     end
     
+    @description = @description.join(' and ') unless @description.empty?
     paginate_model model
     render :index
   end
@@ -67,6 +73,7 @@ class Photos < Application
       @per_page = (params[:per_page] || 18).to_i
       @per_page = 1 if @per_page <= 0
 
+      @total = model.count
       @pages, @photos = model.paginated({
         :page =>     @page,
         :per_page => @per_page

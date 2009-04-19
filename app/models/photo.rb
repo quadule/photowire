@@ -10,8 +10,9 @@ class Photo
   property :description, DataMapper::Types::Text
   property :width, Integer
   property :height, Integer
+  property :md5, String, :length => 32
   
-  belongs_to :wire, :class_name => 'Wire'
+  belongs_to :wire
   has n, :exif_attributes, :class_name => 'PhotoExifAttribute'
   
   validates_is_unique :url, :allow_nil => true
@@ -19,7 +20,6 @@ class Photo
   attr_reader :exif
   attr_accessor :expected_size
   
-  after :path=, :set_file_size
   before :destroy, :destroy_exif_attributes
   before :destroy, :delete_files
   
@@ -36,7 +36,11 @@ class Photo
   end
   
   def set_file_size
-    self.size = File.size(path) unless path.nil?
+    self.size = File.size(path)
+  end
+  
+  def set_hash
+    self.md5 = `openssl md5 < "#{path}"`.chomp
   end
   
   def destroy_exif_attributes
@@ -49,8 +53,12 @@ class Photo
     [width, height].map { |dim| (dim * scale).round }
   end
   
+  def thumbnail_path
+    path.sub(/(\.jpg)$/i, '.thumb.jpg')
+  end
+  
   def thumbnail
-    thumb_path = path.sub(/(\.jpg)$/i, '.thumb.jpg')
+    thumb_path = thumbnail_path
     return thumb_path if File.exists?(thumb_path)
     
     Merb.logger.info "Generating thumbnail for Photo[#{id}]"
@@ -70,14 +78,16 @@ class Photo
   def description_trimmed
     (description || '').
       gsub(/^\*\*.*\*\* */, '').
-      gsub(/^\(FILES\) */, '').
       gsub(/ ?\(AP Photo\/?.*\)\.?$/, '').
-      gsub(/ *AFP[ -]+Photo.*$/i, '')
+      gsub(/ *AFP[ -]+Photo.*$/i, '').
+      gsub(/\(FILES\) */, '').
+      gsub(/TO GO WITH( FRENCH)? AFP (STORY|PHOTO) (by|BY) [A-Z ]+ *-*\.* */, '').
+      gsub(/^TO GO WITH [A-Z'" -]*\.*:* */, '')
   end
   
   def duplicate?
-    !!self.class.first(:path.like => "%-#{file_identifier}.jpg")
-    #expected_size ? !!dupe && dupe.size == expected_size : !!dupe
+    return true if self.class.first(:path.like => "%-#{file_identifier}.jpg")
+    false
   end
   
   def file_identifier
@@ -130,10 +140,12 @@ class Photo
         dir = Merb.root / 'public' / 'images' / published_at.strftime('%Y/%m/%d')
         FileUtils.mkpath(dir) unless File.directory?(dir)
         destination = dir / "#{published_at.strftime('%Y%m%d')}-#{file_identifier}.jpg"
-        File.rename(tmp.path, destination)
+        FileUtils.mv(tmp.path, destination)
         File.chmod(0644, destination)
         self.path = destination.sub(Merb.root + '/', '')
         self.downloaded_at = Time.now
+        set_file_size
+        set_hash
       end
       save!
     end
@@ -144,8 +156,12 @@ class Photo
   end
   
   def delete_files
-    File.delete(thumbnail)
-    File.delete(path)
+    if path
+      File.delete(thumbnail) if File.exists?(thumbnail_path)
+      File.delete(path)
+    else
+      Merb.logger.warn "Tried to delete undownloaded file for Photo[#{id}]: #{$!}"
+    end
   end
   
   def attributes_hash
@@ -186,17 +202,15 @@ class Photo
   end
   
   def keep?
-    log_text = "Skipping Photo[#{id}]: "
-    
-    if exif['LanguageIdentifier'] && exif['LanguageIdentifier'].match(/^fr/i)
-      Merb.logger.info log_text + "description in French"
-      return false
+    no = lambda do |reason|
+      Merb.logger.info "Ignoring URL #{url}: #{reason}"
+      IgnoredUrl.ignore(url, reason)
+      false
     end
     
-    if exif['OriginalTransmissionReference'] == 'ADVISORY'
-      Merb.logger.info log_text + "AFP advisory"
-      return false
-    end
+    return no['description in French'] if exif['LanguageIdentifier'] == 'fr'
+    return no['AFP advisory'] if exif['OriginalTransmissionReference'] == 'ADVISORY'
+    return no['AFP advisory'] if exif['OriginalTransmissionReference'] == 'AFP01'
     
     true
   end
@@ -209,7 +223,7 @@ class Photo
         Merb.logger.warn "Downloaded data for Photo[#{id}] was #{data.length} bytes, expected #{expected_size} bytes"
         return false
       elsif data.length < 1024
-        Merb.logger.warn "Downloaded data for Photo[#{id}] was too small"
+        Merb.logger.warn "Downloaded data for Photo[#{id}] was too small (<1kB)"
         return false
       end
 

@@ -2,7 +2,10 @@
   %label
     Search:
     %input{:type => :text, :name => 'search', :value => h(params[:search] || '')}
-    %input{:type => :submit, :value => 'Go'}
+  %input{:type => :submit, :value => 'Go'}
+  -unless @description.empty?
+    ==Showing #{@total} photos #{h @description}.
+    %a{:href => url(:photos)} Show All
 
 %ul.photos.index
   -@photos.each do |photo|
