@@ -176,7 +176,7 @@ class Photo
   
   def save_exif
     Merb.logger.info "Parsed #{exif.size} EXIF attributes for Photo[#{id}]"
-    description = exif.delete("Caption-Abstract")
+    self.description = exif.delete("Caption-Abstract")
     self.description = description.join(' ') if description.is_a?(Array)
     self.published_at = exif['DateTimeOriginal']
     self.published_at = self.published_at.gsub(/^(\d{4}):(\d{2}):(\d{2}) /, '\1/\2/\3 ') if published_at.is_a?(String)

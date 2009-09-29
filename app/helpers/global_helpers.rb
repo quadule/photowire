@@ -6,6 +6,8 @@ module Merb
     
     def find_date(str)
       Date.parse str[DATE, 0]
+    rescue
+      nil
     end
     
     def link_dates(str)
