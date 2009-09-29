@@ -24,7 +24,11 @@ class PhotoExifAttribute
   IGNORE_VALUES = %w{Normal (none) none None Unknown Uncalibrated}
   
   def self.ignore?(key, value)
-    IGNORE_KEYS.include?(key) || IGNORE_VALUES.include?(value)
+    IGNORE_KEYS.include?(key) || IGNORE_VALUES.include?(value) || binary?(value)
+  end
+  
+  def self.binary?(value)
+    !!(value =~ /^\(Binary data \d+ bytes, use -b option to extract\)/)
   end
   
   def self.cleanup
