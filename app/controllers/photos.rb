@@ -31,11 +31,10 @@ class Photos < Application
       #FIXME: this doesn't actually work for multiple attribute key/value pairs
       params[:attribute].each do |id, value|
         @description << "where #{ExifAttribute.get!(id).name} = \"#{value}\""
-        model = model.all(
-          :links => [:exif_attributes],
-          Photo.exif_attributes.exif_attribute_id => id,
-          Photo.exif_attributes.value => value
-        )
+        model = model.all(:exif_attributes => {
+          :exif_attribute_id => id,
+          :value => value
+        })
       end
     end
     
@@ -73,7 +72,7 @@ class Photos < Application
       @per_page = (params[:per_page] || 18).to_i
       @per_page = 1 if @per_page <= 0
       
-      @pages, @photos, @total = model.paginated({
+      @pages, @photos = model.paginated({
         :page =>     @page,
         :per_page => @per_page
       }.merge(order))
