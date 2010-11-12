@@ -1,7 +1,7 @@
 class Photo
   include DataMapper::Resource
-  is_paginated
-  property :id, Integer, :serial => true
+  extend  DataMapper::Is::Paginated::ClassMethods
+  property :id, Serial
   property :published_at, Time
   property :downloaded_at, Time
   property :url, String, :length => 255
@@ -15,7 +15,7 @@ class Photo
   belongs_to :wire
   has n, :exif_attributes, :class_name => 'PhotoExifAttribute'
   
-  validates_is_unique :url, :allow_nil => true
+  validates_uniqueness_of :url, :allow_nil => true
   
   attr_reader :exif
   attr_accessor :expected_size
@@ -86,6 +86,7 @@ class Photo
   end
   
   def duplicate?
+    return true if self.class.first(:url => url)
     return true if self.class.first(:path.like => "%-#{file_identifier}.jpg")
     false
   end
@@ -178,9 +179,9 @@ class Photo
     Merb.logger.info "Parsed #{exif.size} EXIF attributes for Photo[#{id}]"
     self.description = exif.delete("Caption-Abstract")
     self.description = description.join(' ') if description.is_a?(Array)
-    self.published_at = exif['DateTimeOriginal']
+    self.downloaded_at ||= exif['FileModifyDate'] || Time.now
+    self.published_at = exif['DateTimeOriginal'] || self.downloaded_at
     self.published_at = self.published_at.gsub(/^(\d{4}):(\d{2}):(\d{2}) /, '\1/\2/\3 ') if published_at.is_a?(String)
-    self.downloaded_at ||= exif['FileModifyDate']
     self.width = exif['ImageWidth'].to_i
     self.height = exif['ImageHeight'].to_i
     
@@ -211,6 +212,7 @@ class Photo
     return no['description in French'] if exif['LanguageIdentifier'] == 'fr'
     return no['AFP advisory'] if exif['OriginalTransmissionReference'] == 'ADVISORY'
     return no['AFP advisory'] if exif['OriginalTransmissionReference'] == 'AFP01'
+    return no['too small'] if width < 100 || height < 100
     
     true
   end

@@ -65,16 +65,15 @@ class Photos < Application
       #TODO: override with something from params
       {:order => [:published_at.desc]}
     end
-  
+    
     def paginate_model(model)
       @page = (params[:page] || 1).to_i
       @page = 1 if @page <= 0
-
+      
       @per_page = (params[:per_page] || 18).to_i
       @per_page = 1 if @per_page <= 0
-
-      @total = model.count
-      @pages, @photos = model.paginated({
+      
+      @pages, @photos, @total = model.paginated({
         :page =>     @page,
         :per_page => @per_page
       }.merge(order))

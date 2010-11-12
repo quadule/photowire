@@ -1,6 +1,6 @@
 class PhotoExifAttribute
   include DataMapper::Resource
-  property :id, Integer, :serial => true
+  property :id, Serial
   property :value, String
   
   belongs_to :exif_attribute

@@ -2,7 +2,7 @@
 
 class Wire
   include DataMapper::Resource
-  property :id, Integer, :serial => true
+  property :id, Serial
   property :name, String
   property :url, String
   property :feed_cache, Text
@@ -29,7 +29,7 @@ class Wire
       photo.expected_size = enclosure[:length].to_i
       photo.published_at = Time.parse((item/'pubDate').inner_text)
       
-      unless photo.duplicate? or IgnoredUrl.ignore?(enclosure[:url])
+      unless photo.expected_size < 10000 || photo.duplicate? || IgnoredUrl.ignore?(enclosure[:url])
         photo.save!
         if photo.download
           if photo.keep?

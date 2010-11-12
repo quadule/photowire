@@ -43,42 +43,11 @@ Gem.path.unshift(Merb.root / "gems")
 # uncomment this.
 # Merb.push_path(:lib, Merb.root / "lib") # uses **/*.rb as path glob.
 
-# ==== Dependencies
-
-# These are some examples of how you might specify dependencies.
-# Dependency loading is delayed to a later Merb app
-# boot stage, but it may be important when
-# another part of your configuration relies on libraries specified
-# here.
-#
-# dependencies "RedCloth", "merb_helpers"
-# OR
-# dependency "RedCloth", "> 3.0"
-# OR
-# dependencies "RedCloth" => "> 3.0", "ruby-aes-cext" => "= 1.0"
-
-dependency "dm-validations"
-dependency "dm-aggregates"
-dependency "dm-is-paginated"
-dependency "dm-timestamps"
-
-dependency "merb-action-args"   # Provides support for querystring arguments to be passed in to controller actions
-dependency "merb-assets"        # Provides link_to, asset_path, auto_link, image_tag methods (and lots more)
-dependency "merb-helpers"       # Provides the form, date/time, and other helpers
-dependency "merb-pagination"
-dependency "merb-haml"          # Adds rake tasks and the haml generators to your merb app
-dependency "merb-jquery"        # Provides a #jquery method to insert jQuery code in to a content block
-dependency "merb-param-protection"  # Lets you have better control over your query string params and param logging
-
-dependency "mini_exiftool"
-dependency "rmagick"
-
-
 Merb::BootLoader.after_app_loads do
   # Add dependencies here that must load after the application loads:
 
   # dependency "magic_admin" # this gem uses the app's model classes
-  # DataObjects::Mysql.logger = DataObjects::Logger.new('log/dm.log', Merb.logger.level)
+  #DataObjects::Mysql.logger = DataObjects::Logger.new('log/dm.log', Merb.logger.level)
 end
 
 
@@ -134,7 +103,7 @@ Merb::Config.use do |c|
 
   # Sets up a custom session id key which is used for the session persistence
   # cookie name.  If not specified, defaults to '_session_id'.
-  # c[:session_id_key] = '_session_id'
+  c[:session_id_key] = '_session_id'
   
   # The session_secret_key is only required for the cookie session store.
   c[:session_secret_key] = Photowire::Secrets::SESSION_SECRET_KEY

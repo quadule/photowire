@@ -1,6 +1,6 @@
 class IgnoredUrl
   include DataMapper::Resource
-  property :id, Integer, :serial => true
+  property :id, Serial
   property :url, String, :length => 255, :unique => true
   property :reason, String
   property :created_at, Time
@@ -8,7 +8,7 @@ class IgnoredUrl
   
   def self.ignore?(url)
     if ignored = first(:url => url)
-      Merb.logger.info "Saw ignored URL #{url}"
+      Merb.logger.debug "Saw ignored URL #{url}"
       ignored.last_seen_at = Time.now.utc
       ignored.save!
       true
